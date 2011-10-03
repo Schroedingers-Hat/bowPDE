@@ -10,7 +10,7 @@ for k = 1:bw
     Vec(xPts + 1 - k) = Vec(xPts - bw);
     
     Vec(xPts + bw + 1 - k) = Vec(xPts + bw + 2 - k) + Vec(xPts + bw + 1) - Vec(xPts + bw + 2);
-    Vec(end - bw - 1 + k) = Vec(end - bw - 2 + k) + Vec(end - bw - 1) - Vec(end - bw - 2);
+    Vec(end - bw + k) = Vec(end - bw - 1 + k) + Vec(end - bw) - Vec(end - bw - 1);
 end
 
 

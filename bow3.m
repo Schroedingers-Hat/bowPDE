@@ -1,7 +1,7 @@
   clear
   clf
   xPts = 101;                                                               % Number of x points. Odd
-  dt   = 0.01;                                                              % Time step.
+  dt   = 0.001;                                                              % Time step.
   m    = 1/10;                                                             % Mass density.
   
   %coupled PDE vector
@@ -11,7 +11,7 @@
   q    = zeros(xPts, 1);                                                   % No force on most of it.
   q(5) = 0.001;
   q(end-4) = 0.001;
-  q((xPts + 1)/2) = -0.002;
+%   q((xPts + 1)/2) = -0.002;
 
   % Difference operator. 
   % Using second order coefficients for second derivative.
@@ -29,7 +29,8 @@
   dTwo(end,end) = -1;
 
   E = 1;
-  I = [1:2/xPts:2 2-2/xPts:-2/xPts:1].^4;
+  I = [1:2/xPts:2];
+  I = [I fliplr(I(1:end-1))];
   EI = diag(E.*I);
   
   %Euler-Bernoulli operator
@@ -37,15 +38,15 @@
   
   %Make HUGE MATRIX. Presently a huge operator such that 
   %Tfwd U(x,t) = U(x,t+1)
-  M1 = -dt^2/m*EBOp;                                                        % map v to v stepping backwards
-  M2 = -EBOp;                                                               % map w to v
+  M1 = -dt/m*EBOp;  %zeros(xPts,xPts);                                                      % map v to v stepping backwards
+  M2 = -EBOp/m;                                                               % map w to v
   M3 = eye(xPts);                                                           % map w to w
   M4 = zeros(xPts,xPts);                                                    % map v to w
   
   Tfwd = [M1 M2;...
           M3 M4];
  
-  % Boundary conditions.
+%   Boundary conditions.
 %   Tfwd((xPts + 1) / 2,:) = 0;
 %   Tfwd((xPts + 1) / 2,(xPts + 1) / 2) = 1;      %Avoid singular matrix
 %   Tfwd((3*xPts + 1) / 2,:) = 0;
@@ -60,9 +61,9 @@
 %     Tfwd(xPts + bw + 1 - k,:) = 0;
 %     Tfwd(xPts + bw + 1 - k,xPts + bw + 2) = 1-k;
 %     Tfwd(xPts + bw + 1 - k,xPts + bw + 1) = k;
-%     Tfwd(end - bw - 1 + k,:) = 0;
-%     Tfwd(end - bw - 1 + k,end - bw - 2) = 1-k;
-%     Tfwd(end - bw - 1 + k,end - bw - 1) = k;
+%     Tfwd(end - bw + k,:) = 0;
+%     Tfwd(end - bw + k,end - bw - 1) = 1-k;
+%     Tfwd(end - bw + k,end - bw) = k;
 %   end
   
   % Do similar things for the straight ends.
@@ -71,7 +72,9 @@
 
   % Won't bother combining things into a single matrix yet.
   hold off;
-  for count = 1:10000;
+  fin = 100000;
+  for count = 1:fin;
+      
     %cVec = Tfwd * cVec;
     F = [q/m*dt; zeros(xPts,1)];
     
@@ -82,8 +85,12 @@
     
     cVec = cVec + (1/6)*(m1+2*(m2+m3)+m4);
     
-    if mod(100, count) == 0
-    hold on;
-    plot(cVec(xPts+1:2*xPts));
+    cVec = setBoundaries(cVec,xPts);
+    
+    if mod(count, fin/100) == 0
+        clc
+        pc = count*100/fin
+        hold on;
+        plot(cVec(xPts+1:2*xPts));
     end
   end
