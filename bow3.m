@@ -1,6 +1,6 @@
   clear
   clf
-  xPts = 101;                                                               % Number of x points. Odd
+  xPts = 301;                                                               % Number of x points. Odd
   dt   = 0.01;                                                              % Time step.
   m    = 1/10;                                                             % Mass density.
   
@@ -11,7 +11,7 @@
   q    = zeros(xPts, 1);                                                   % No force on most of it.
   q(5) = 0.001;
   q(end-4) = 0.001;
-%  q((xPts + 1)/2) = 0.01;
+  q((xPts + 1)/2) = -0.002;
 
   % Difference operator. 
   % Using second order coefficients for second derivative.
@@ -32,7 +32,7 @@
   I = [1:2/xPts:2 2-2/xPts:-2/xPts:1].^4;
   EI = diag(E.*I);
   
-  %EBOp = dFour;
+  %Euler-Bernoulli operator
   EBOp = dTwo*EI*dTwo;
   
   %Make HUGE MATRIX. Presently a huge operator such that 
@@ -50,23 +50,41 @@
   Tbck = [M1 M2 M3;...
           M4 M5 M6;...
              M7];
+         
+ Tfwd = Tbck^(-1);
+ 
   % Boundary conditions.
-  Tbck((xPts + 1) / 2,:) = 0;
-  Tbck((xPts + 1) / 2,(xPts + 1) / 2) = 1;
-  Tbck((3*xPts + 1) / 2,:) = 0;
-  Tbck((3*xPts + 1) / 2,(3*xPts + 1) / 2) = 1;
+  Tfwd((xPts + 1) / 2,:) = 0;
+  Tfwd((xPts + 1) / 2,(xPts + 1) / 2) = 1;      %Avoid singular matrix
+  Tfwd((3*xPts + 1) / 2,:) = 0;
+  Tfwd((3*xPts + 1) / 2,(3*xPts + 1) / 2) = 1;  %Avoid singular matrix
+  Tfwd(1:4,:) = 0;
+  Tfwd(1:4,5) = 1;                             
+  Tfwd(xPts-3:xPts,:) = 0;
+  Tfwd(xPts-3:xPts,xPts-4) = 1;
+  
+  bw = 4;
+  for k = 1:bw
+  Tfwd(xPts + bw + 1 - k,:) = 0;
+  Tfwd(xPts + bw + 1 - k,xPts + bw + 2) = 1-k;
+  Tfwd(xPts + bw + 1 - k,xPts + bw + 1) = k;
+  Tfwd(end - bw - 1 + k,:) = 0;
+  Tfwd(end - bw - 1 + k,end - bw - 2) = 1-k;
+  Tfwd(end - bw - 1 + k,end - bw - 1) = k;
+  end
+  
+  Tfwd = Tfwd^2^12;
   % Do similar things for the straight ends.
   % Could use lower order finite difference eqs so only the last few pts
 
 %[v,w](x,t+1) = (I - OPERATOR*dt)^(-1)[v,w](x,t)
 
   % Invert TOp to get forward time operator
-  Tfwd = ((((Tbck^(-1)))^10)^200);
+
   % Won't bother combining things into a single matrix yet.
   hold off;
   for count = 1:10;
     cVec = Tfwd * cVec;
-    cVec = setBoundaries(cVec,xPts);
     hold on;
     plot(cVec(xPts+1:2*xPts));
   end
