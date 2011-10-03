@@ -1,11 +1,11 @@
   clear
   clf
-  xPts = 301;                                                               % Number of x points. Odd
+  xPts = 101;                                                               % Number of x points. Odd
   dt   = 0.01;                                                              % Time step.
   m    = 1/10;                                                             % Mass density.
   
   %coupled PDE vector
-  cVec = [zeros(2*xPts,1); 1];
+  cVec = [zeros(2*xPts,1)];
 
   % Set force function.
   q    = zeros(xPts, 1);                                                   % No force on most of it.
@@ -43,27 +43,27 @@
   M4 = zeros(xPts,xPts);                                                    % map v to w
   
   Tfwd = [M1 M2;...
-          M3 M4;
+          M3 M4;];
  
   % Boundary conditions.
-  Tfwd((xPts + 1) / 2,:) = 0;
-  Tfwd((xPts + 1) / 2,(xPts + 1) / 2) = 1;      %Avoid singular matrix
-  Tfwd((3*xPts + 1) / 2,:) = 0;
-  Tfwd((3*xPts + 1) / 2,(3*xPts + 1) / 2) = 1;  %Avoid singular matrix
-  Tfwd(1:4,:) = 0;
-  Tfwd(1:4,5) = 1;                             
-  Tfwd(xPts-3:xPts,:) = 0;
-  Tfwd(xPts-3:xPts,xPts-4) = 1;
-  
-  bw = 4;
-  for k = 1:bw
-    Tfwd(xPts + bw + 1 - k,:) = 0;
-    Tfwd(xPts + bw + 1 - k,xPts + bw + 2) = 1-k;
-    Tfwd(xPts + bw + 1 - k,xPts + bw + 1) = k;
-    Tfwd(end - bw - 1 + k,:) = 0;
-    Tfwd(end - bw - 1 + k,end - bw - 2) = 1-k;
-    Tfwd(end - bw - 1 + k,end - bw - 1) = k;
-  end
+%   Tfwd((xPts + 1) / 2,:) = 0;
+%   Tfwd((xPts + 1) / 2,(xPts + 1) / 2) = 1;      %Avoid singular matrix
+%   Tfwd((3*xPts + 1) / 2,:) = 0;
+%   Tfwd((3*xPts + 1) / 2,(3*xPts + 1) / 2) = 1;  %Avoid singular matrix
+%   Tfwd(1:4,:) = 0;
+%   Tfwd(1:4,5) = 1;                             
+%   Tfwd(xPts-3:xPts,:) = 0;
+%   Tfwd(xPts-3:xPts,xPts-4) = 1;
+%   
+%   bw = 4;
+%   for k = 1:bw
+%     Tfwd(xPts + bw + 1 - k,:) = 0;
+%     Tfwd(xPts + bw + 1 - k,xPts + bw + 2) = 1-k;
+%     Tfwd(xPts + bw + 1 - k,xPts + bw + 1) = k;
+%     Tfwd(end - bw - 1 + k,:) = 0;
+%     Tfwd(end - bw - 1 + k,end - bw - 2) = 1-k;
+%     Tfwd(end - bw - 1 + k,end - bw - 1) = k;
+%   end
   
   % Do similar things for the straight ends.
   % Could use lower order finite difference eqs so only the last few pts
@@ -73,7 +73,7 @@
   hold off;
   for count = 1:10000;
     %cVec = Tfwd * cVec;
-    F = q/m*dt;
+    F = [q/m*dt; zeros(xPts,1)];
     
     m1 = dt*Tfwd*cVec+F;
     m2 = dt*Tfwd*cVec+m1/2+F;
