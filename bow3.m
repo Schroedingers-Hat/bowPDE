@@ -1,31 +1,32 @@
   clear
   clf
   xPts = 101;                                                               % Number of x points. Odd
-  dt   = 0.001;                                                              % Time step.
+  dt   = 0.0001;                                                              % Time step.
   m    = 1/10;                                                             % Mass density.
   
   %coupled PDE vector
-  cVec = [zeros(2*xPts,1)];
+  cVec = [zeros(4*xPts,1)];
 
   % Set force function.
   q    = zeros(xPts, 1);                                                   % No force on most of it.
-  q(5) = 0.001;
-  q(end-4) = 0.001;
+%   q(5) = 0.001;
+%   q(end-4) = 0.001;
+  q((end+1)/2) = 0.001;
   
   % Difference operators. 
 
-  d2Coeffs2 = [0 0 0 1 -2 1 0 0 0];
-  d1Coeffs2 = [0 0 0 -0.5 0 -0.5 0 0 0];
-  d2Coeffs8 = [-1/560 8/315 -1/5 8/5 -205/72 8/5 -1/5 8/315 -1/560];
+  d2Coeffs = [0 1/90 -3/20 3/2 -49/18 3/2 -3/20 1/90 0];
+  d1Coeffs = [0 -1/60 3/20 -3/4 0 3/4 -3/20 1/60 0];
   dTwo = zeros(xPts,xPts);
   dOne = dTwo;
-
+ 
+  
   for count = -4:4
     % Add an offset diagonal matrix for each step to build banded matrix.
     dTwo = dTwo + ...
-            d2Coeffs2(count + 5) * diag( ones( 1, xPts - abs(count) ), count);
+            d2Coeffs(count + 5) * diag( ones( 1, xPts - abs(count) ), count);
     dOne = dOne + ...
-            d1Coeffs2(count + 5) * diag( ones( 1, xPts - abs(count) ), count);
+            d1Coeffs(count + 5) * diag( ones( 1, xPts - abs(count) ), count);
   end
   dTwo(1,1) = -1;
   dTwo(end,end) = -1;
@@ -35,9 +36,9 @@
   a = [a fliplr(a(1:end-1))];
   b = [1:2/xPts:2];
   b = [b fliplr(b(1:end-1))];
-  E = 1;
+  E = 1E9;
   I = diag(a.*b.^3);
-  p = 1;
+  p = 5;
   k = 1;
   G = 1;
   A = diag(a.*b);
@@ -63,9 +64,9 @@
   d/dt[v w dphi phi] = [(1/pA)d/dx(kAG(dw/dx-phi) v]
   %}
   M1 = zeros(xPts,xPts);                                    
-  M2 = (1/p*A)*dOne*(kAG*(dOne*eye(xPts)));
+  M2 = (1./p)*A^(-1)*dOne*(kAG*(dOne));
   M3 = zeros(xPts,xPts);
-  M4 = (1/p*A)*dOne*(kAG*(dOne*-eye(xPts)));
+  M4 = (1./p)*A^(-1)*dOne*(-kAG);
   
   M5 = eye(xPts);
   M6 = zeros(xPts,xPts);
@@ -73,9 +74,9 @@
   M8 = zeros(xPts,xPts);
   
   M9 = zeros(xPts,xPts);
-  M10 = (1/p*I)*kAG*(dOne*eye(xPts));
+  M10 = 1/p*I^(-1)*kAG*(dOne);
   M11 = zeros(xPts,xPts);
-  M12 = dOne*EI*dOne*eye(xPts,xPts);
+  M12 = 1/p*I^(-1)*(dOne*EI*dOne-kAG);
   
   M13 = zeros(xPts,xPts);
   M14 = zeros(xPts,xPts);
@@ -88,9 +89,10 @@
           M13 M14 M15 M16];
 
   hold off;
-  fin = 100000;
+  fin = 10000;
+  %F is force for [v w dphi phi]
   for count = 1:fin;
-    F = [q/m*dt; zeros(xPts,1)];
+    F = [q./(p.*a'.*b')*dt; zeros(3*xPts,1)];
     
     m1 = dt*Tfwd*cVec+F;
     m2 = dt*Tfwd*cVec+m1/2+F;
@@ -99,9 +101,9 @@
     
     cVec = cVec + (1/6)*(m1+2*(m2+m3)+m4);
     
-    cVec = setBoundaries(cVec,xPts);
+    %cVec = setBoundaries(cVec,xPts);
     
-    if mod(count, fin/10) == 0
+    if mod(count, fin/100) == 0
         clc
         pc = count*100/fin
         hold on;
