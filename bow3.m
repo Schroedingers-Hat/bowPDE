@@ -1,7 +1,7 @@
   clear
   clf
-  xPts = 21;                                                               % Number of x points. Odd
-  dt   = 0.1;                                                              % Time step.
+  xPts = 101;                                                               % Number of x points. Odd
+  dt   = 0.01;                                                              % Time step.
   m    = 1/10;                                                             % Mass density.
   
   %coupled PDE vector
@@ -49,16 +49,23 @@
   Tbck = [M1 M2 M3;...
          M4 M5 M6;...
             M7];
+  % Boundary conditions.
+  Tbck((xPts + 1) / 2,:) = 0;
+  Tbck((xPts + 1) / 2,(xPts + 1) / 2) = 1;
+  Tbck((3*xPts + 1) / 2,:) = 0;
+  Tbck((3*xPts + 1) / 2,(3*xPts + 1) / 2) = 1;
+  % Do similar things for the straight ends.
+  % Could use lower order finite difference eqs so only the last few pts
+
+
 
   % Invert TOp to get forward time operator
-  Tfwd = Tbck^(-1);
+  Tfwd = ((((Tbck^(-1)))^10)^200);
   % Won't bother combining things into a single matrix yet.
   hold off;
   for count = 1:10;
-    for count2 = 1:5;
-      cVec = Tfwd * cVec;
-      cVec = setBoundaries(cVec,xPts);
-    end
+    cVec = Tfwd * cVec;
+    cVec = setBoundaries(cVec,xPts);
     hold on;
     plot(cVec(xPts+1:2*xPts));
   end
