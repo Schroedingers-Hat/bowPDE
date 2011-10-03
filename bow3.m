@@ -29,7 +29,7 @@
   dTwo(end,end) = -1;
 
   E = 1;
-  I = [1:2/xPts:2 2-2/xPts:-2/xPts:1];
+  I = [1:2/xPts:2 2-2/xPts:-2/xPts:1].^4;
   EI = diag(E.*I);
   
   %EBOp = dFour;
@@ -38,6 +38,7 @@
   %Make HUGE MATRIX. Presently a huge operator such that 
   %Tbck U(x,t+1) = U(x,t)
 %  M1 = -dt^2/m*EBOp+eye(xPts);                                            % map v to v
+  
   M1 = eye(xPts);                                                          % map v to v
   M2 = EBOp/m*dt;                                                          % map w to v
   M3 = -(q/m*dt);                                                          % map 1 to v
@@ -47,8 +48,8 @@
   M7 = [zeros(1,2*xPts), 1];                                               % map 1 to 1
   
   Tbck = [M1 M2 M3;...
-         M4 M5 M6;...
-            M7];
+          M4 M5 M6;...
+             M7];
   % Boundary conditions.
   Tbck((xPts + 1) / 2,:) = 0;
   Tbck((xPts + 1) / 2,(xPts + 1) / 2) = 1;
@@ -57,7 +58,7 @@
   % Do similar things for the straight ends.
   % Could use lower order finite difference eqs so only the last few pts
 
-
+%[v,w](x,t+1) = (I - OPERATOR*dt)^(-1)[v,w](x,t)
 
   % Invert TOp to get forward time operator
   Tfwd = ((((Tbck^(-1)))^10)^200);
