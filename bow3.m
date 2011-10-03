@@ -43,7 +43,7 @@
   M4 = zeros(xPts,xPts);                                                    % map v to w
   
   Tfwd = [M1 M2;...
-          M3 M4;
+          M3 M4];
  
   % Boundary conditions.
   Tfwd((xPts + 1) / 2,:) = 0;
