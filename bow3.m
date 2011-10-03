@@ -43,9 +43,9 @@
   M4 = zeros(xPts,xPts);                                                    % map v to w
   
   Tfwd = [M1 M2;...
-          M4 M5;
+          M3 M4;
  
-         % Boundary conditions.
+  % Boundary conditions.
   Tfwd((xPts + 1) / 2,:) = 0;
   Tfwd((xPts + 1) / 2,(xPts + 1) / 2) = 1;      %Avoid singular matrix
   Tfwd((3*xPts + 1) / 2,:) = 0;
@@ -57,12 +57,12 @@
   
   bw = 4;
   for k = 1:bw
-  Tfwd(xPts + bw + 1 - k,:) = 0;
-  Tfwd(xPts + bw + 1 - k,xPts + bw + 2) = 1-k;
-  Tfwd(xPts + bw + 1 - k,xPts + bw + 1) = k;
-  Tfwd(end - bw - 1 + k,:) = 0;
-  Tfwd(end - bw - 1 + k,end - bw - 2) = 1-k;
-  Tfwd(end - bw - 1 + k,end - bw - 1) = k;
+    Tfwd(xPts + bw + 1 - k,:) = 0;
+    Tfwd(xPts + bw + 1 - k,xPts + bw + 2) = 1-k;
+    Tfwd(xPts + bw + 1 - k,xPts + bw + 1) = k;
+    Tfwd(end - bw - 1 + k,:) = 0;
+    Tfwd(end - bw - 1 + k,end - bw - 2) = 1-k;
+    Tfwd(end - bw - 1 + k,end - bw - 1) = k;
   end
   
   % Do similar things for the straight ends.
