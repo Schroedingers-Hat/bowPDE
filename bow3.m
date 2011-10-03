@@ -37,20 +37,15 @@
   
   %Make HUGE MATRIX. Presently a huge operator such that 
   %Tfwd U(x,t) = U(x,t+1)
-  M1 = -dt^2/m*EBOp+eye(xPts);                                            % map v to v  
-  %M1 = eye(xPts);                                                          % map v to v
-  M2 = -EBOp/m*dt;                                                          % map w to v
-  M3 = (q/m*dt);                                                          % map 1 to v
-  M4 = eye(xPts)*dt;                                                      % map w to w
-  M5 = eye(xPts);                                                          % map v to w
-  M6 = zeros(xPts,1);                                                      % map 1 to w
-  M7 = [zeros(1,2*xPts), 1];                                               % map 1 to 1
+  M1 = -dt^2/m*EBOp;                                                        % map v to v stepping backwards
+  M2 = -EBOp;                                                               % map w to v
+  M3 = eye(xPts);                                                           % map w to w
+  M4 = zeros(xPts,xPts);                                                    % map v to w
   
-  Tfwd = [M1 M2 M3;...
-          M4 M5 M6;...
-             M7];
+  Tfwd = [M1 M2;...
+          M4 M5;
  
-  % Boundary conditions.
+         % Boundary conditions.
   Tfwd((xPts + 1) / 2,:) = 0;
   Tfwd((xPts + 1) / 2,(xPts + 1) / 2) = 1;      %Avoid singular matrix
   Tfwd((3*xPts + 1) / 2,:) = 0;
@@ -77,14 +72,15 @@
   % Won't bother combining things into a single matrix yet.
   hold off;
   for count = 1:10000;
-    cVec = Tfwd * cVec;
+    %cVec = Tfwd * cVec;
+    F = q/m*dt;
     
-%     m1 = Tfwd*cVec;
-%     m2 = Tfwd*cVec+m1/2;
-%     m3 = Tfwd*cVec+m2/2;
-%     m4 = Tfwd*cVec+m3;
-%     
-%     cVec = cVec + (1/6)*(m1+2*(m2+m3)+m4);
+    m1 = dt*Tfwd*cVec+F;
+    m2 = dt*Tfwd*cVec+m1/2+F;
+    m3 = dt*Tfwd*cVec+m2/2+F;
+    m4 = dt*Tfwd*cVec+m3+F;
+    
+    cVec = cVec + (1/6)*(m1+2*(m2+m3)+m4);
     
     if mod(100, count) == 0
     hold on;
