@@ -56,7 +56,7 @@
   hold off;
   for count = 1:10;
     for count2 = 1:5;
-      cVec = Tbck * cVec;
+      cVec = Tfwd * cVec;
       cVec = setBoundaries(cVec,xPts);
     end
     hold on;
