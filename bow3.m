@@ -36,22 +36,19 @@
   EBOp = dTwo*EI*dTwo;
   
   %Make HUGE MATRIX. Presently a huge operator such that 
-  %Tbck U(x,t+1) = U(x,t)
-%  M1 = -dt^2/m*EBOp+eye(xPts);                                            % map v to v
-  
-  M1 = eye(xPts);                                                          % map v to v
-  M2 = EBOp/m*dt;                                                          % map w to v
-  M3 = -(q/m*dt);                                                          % map 1 to v
-  M4 = -eye(xPts)*dt;                                                      % map w to w
+  %Tfwd U(x,t) = U(x,t+1)
+  M1 = -dt^2/m*EBOp+eye(xPts);                                            % map v to v  
+  %M1 = eye(xPts);                                                          % map v to v
+  M2 = -EBOp/m*dt;                                                          % map w to v
+  M3 = (q/m*dt);                                                          % map 1 to v
+  M4 = eye(xPts)*dt;                                                      % map w to w
   M5 = eye(xPts);                                                          % map v to w
   M6 = zeros(xPts,1);                                                      % map 1 to w
   M7 = [zeros(1,2*xPts), 1];                                               % map 1 to 1
   
-  Tbck = [M1 M2 M3;...
+  Tfwd = [M1 M2 M3;...
           M4 M5 M6;...
              M7];
-         
- Tfwd = Tbck^(-1);
  
   % Boundary conditions.
   Tfwd((xPts + 1) / 2,:) = 0;
@@ -73,18 +70,24 @@
   Tfwd(end - bw - 1 + k,end - bw - 1) = k;
   end
   
-  Tfwd = Tfwd^2^12;
   % Do similar things for the straight ends.
   % Could use lower order finite difference eqs so only the last few pts
 
-%[v,w](x,t+1) = (I - OPERATOR*dt)^(-1)[v,w](x,t)
-
-  % Invert TOp to get forward time operator
 
   % Won't bother combining things into a single matrix yet.
   hold off;
-  for count = 1:10;
+  for count = 1:10000;
     cVec = Tfwd * cVec;
+    
+%     m1 = Tfwd*cVec;
+%     m2 = Tfwd*cVec+m1/2;
+%     m3 = Tfwd*cVec+m2/2;
+%     m4 = Tfwd*cVec+m3;
+%     
+%     cVec = cVec + (1/6)*(m1+2*(m2+m3)+m4);
+    
+    if mod(100, count) == 0
     hold on;
     plot(cVec(xPts+1:2*xPts));
+    end
   end
