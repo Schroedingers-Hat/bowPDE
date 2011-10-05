@@ -1,6 +1,6 @@
   clear
   clf
-  xPts = 201;                                                               % Number of x points. Odd
+  xPts = 1001;                                                               % Number of x points. Odd
   L = 1.5;
   dx = L/xPts;
   dt   = 0.0001;                                                              % Time step.
@@ -22,10 +22,11 @@
 
   
   % Set force function.
-  q    = zeros(xPts,1);                                                   % No force on most of it.
-  q(5) = 1E1;%*dx^4;
-  q(end-4) = 1E1;%*dx^4;
-  q(mid) = -2E1;%*dx^4;
+  q    = zeros(xPts,1); % No force on most of it.
+  fk = 10;
+  q(5) = 1*fk;%*dx^4;
+  q(end-4) = 1*fk;%*dx^4;
+  q(mid) = -2*fk;%*dx^4;
 
   % Difference operator. 
   % Using second order coefficients for second derivative.
@@ -54,8 +55,8 @@
   
   %Make HUGE MATRIX. Presently a huge operator such that 
   %Tfwd U(x,t) = U(x,t+1)
-  M1 =  -10*dt/m*EBOp;                                      % map v to v stepping backwards
-  M2 = -EBOp/(m);                                                            % map w to v
+  M1 = -100*dt/m*EBOp;                                                % map v to v stepping backwards
+  M2 = -EBOp/(m);                                                          % map w to v
   M3 = eye(xPts);                                                          % map w to w
   M4 = zeros(xPts,xPts);                                                   % map v to w
   
@@ -68,11 +69,56 @@ cphi = zeros(xPts,1);
 X = cphi;
 Y = cphi;
 
-  hold off;
+%STRINGING LOOP------------------------------------------------------------
   fin = 1000;
-  for count = 1:fin;
-      
+  fap = 1;
+  while Y(5) <= 0.2;
+     
+    dw = cVec(xPts+2:end) - cVec(xPts+1:end-1) - deflection;
+    dphi = atan(dw/dx);
     
+    for count2 = 1:mid - 1
+      cphi(mid - count2) = cphi(mid - count2 + 1) + dphi(mid - count2);
+      cphi(mid + count2) = cphi(mid + count2 - 1) + dphi(mid + count2 -1);
+      
+      X(mid - count2) = X(mid - count2 + 1) - dx*cos(cphi(mid - count2));
+      X(mid + count2) = X(mid + count2 - 1) + dx*cos(cphi(mid + count2));
+      
+      Y(mid - count2) = Y(mid - count2 + 1) - dx*sin(cphi(mid - count2));
+      Y(mid + count2) = Y(mid + count2 - 1) + dx*sin(cphi(mid + count2));   
+    end
+    
+    if fap == 1
+          woot = 0.1;
+          sl = X(end - 4);
+          sy0 = Y(5);
+    end
+    
+    sdx = X(end - 4);        %string x component
+    sa = acos(sdx/sl);              %angle of string
+    sdy = sl*sin(sa);             %string y component
+
+   F = [q/m*dt; zeros(xPts,1)]*sin(-cphi(5)+sa)/(2*sin(sa)+woot);
+   F(mid) = q(mid)/m*dt;
+   woot = 0;
+   
+    cVec = Tcrank * (cVec + F*fap/fin);                                             %CRANK
+    cVec(xPts+1:2*xPts) = cVec(xPts+1:2*xPts) - cVec(mid+xPts);             %move back
+    cVec(1:xPts) = cVec(1:xPts) - cVec(mid); 
+    
+    fap = fap + 1
+  end
+  cVec(1:xPts) = 0;
+        figure(376)
+        plot([Y(5)+sdy; Y(5); Y; Y(end-4); Y(5)+sdy],[0; X(5); X; X(end-4); 0]')
+        hold on
+        axis equal
+        axis([-0.2 1 -1 1])
+%CALCULATION LOOP----------------------------------------------------------
+  q=q*1.1;
+  hold off;
+  for count = 1:fin;
+     
     dw = cVec(xPts+2:end) - cVec(xPts+1:end-1) - deflection;
     dphi = atan(dw/dx);
     
@@ -88,20 +134,21 @@ Y = cphi;
     end
     
     if count == 1
-          woot = 0.1;
+          woot = 0.01;
           sl = X(end - 4);
           sy0 = Y(5);
     end
     
+    if count >=500
+        q = q*0;
+    end
     %q = q*(1+0.01*(sin(0.1*count)));
     
     sdx = X(end - 4);        %string x component
     sa = acos(sdx/sl);              %angle of string
     sdy = sl*sin(sa);             %string y component
     
-    %F = F0 * tan(sa)^-1 * sin(cphi);
-    
-   %F = [q/m*dt; zeros(xPts,1)].*cos([cphi; zeros(xPts,1)]);
+
    F = [q/m*dt; zeros(xPts,1)]*sin(-cphi(5)+sa)/(2*sin(sa)+woot);
    F(mid) = q(mid)/m*dt;
    woot = 0;
@@ -113,6 +160,7 @@ Y = cphi;
     %cVec = setBoundaries(cVec,xPts);
     
     if mod(count, fin/10000) == 0
+        pause(0.01)
         clc
         pc = count*100/fin
         printF = F(5)
@@ -134,6 +182,6 @@ Y = cphi;
         plot([Y(5)+sdy; Y(5); Y; Y(end-4); Y(5)+sdy],[0; X(5); X; X(end-4); 0]')
         hold on
         axis equal
-        axis([-1 1 -1 1])
+        axis([-0.2 1 -1 1])
     end
   end
