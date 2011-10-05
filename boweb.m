@@ -1,6 +1,6 @@
   clear
   clf
-  xPts = 101;                                                               % Number of x points. Odd
+  xPts = 201;                                                               % Number of x points. Odd
   L = 1.5;
   dx = L/xPts;
   dt   = 0.0001;                                                              % Time step.
@@ -23,9 +23,9 @@
   
   % Set force function.
   q    = zeros(xPts,1);                                                   % No force on most of it.
-  q(5) = 10;
-  q(end-4) = 10;
-  q(mid) = -20;
+  q(5) = 1E1;%*dx^4;
+  q(end-4) = 1E1;%*dx^4;
+  q(mid) = -2E1;%*dx^4;
 
   % Difference operator. 
   % Using second order coefficients for second derivative.
@@ -39,7 +39,7 @@
   for count = -4:4
     % Add an offset diagonal matrix for each step to build banded matrix.
     dTwo = dTwo + ...
-            d2Coeffs2(count + 5) * diag( ones( 1, xPts - abs(count) ), count);
+            (1E-4/dx^2)*d2Coeffs2(count + 5) * diag( ones( 1, xPts - abs(count) ), count);
     dOne = dOne + ...
             d1Coeffs1(count + 5) * diag( ones( 1, xPts - abs(count) ), count);
   end
@@ -80,11 +80,11 @@ Y = cphi;
       cphi(mid - count2) = cphi(mid - count2 + 1) + dphi(mid - count2);
       cphi(mid + count2) = cphi(mid + count2 - 1) + dphi(mid + count2 -1);
       
-      X(mid - count2) = X(mid - count2 + 1) - cos(cphi(mid - count2));
-      X(mid + count2) = X(mid + count2 - 1) + cos(cphi(mid + count2));
+      X(mid - count2) = X(mid - count2 + 1) - dx*cos(cphi(mid - count2));
+      X(mid + count2) = X(mid + count2 - 1) + dx*cos(cphi(mid + count2));
       
-      Y(mid - count2) = Y(mid - count2 + 1) - sin(cphi(mid - count2));
-      Y(mid + count2) = Y(mid + count2 - 1) + sin(cphi(mid + count2));   
+      Y(mid - count2) = Y(mid - count2 + 1) - dx*sin(cphi(mid - count2));
+      Y(mid + count2) = Y(mid + count2 - 1) + dx*sin(cphi(mid + count2));   
     end
     
     if count == 1
@@ -134,6 +134,6 @@ Y = cphi;
         plot([Y(5)+sdy; Y(5); Y; Y(end-4); Y(5)+sdy],[0; X(5); X; X(end-4); 0]')
         hold on
         axis equal
-        axis([-10 60 -mid mid])
+        axis([-1 1 -1 1])
     end
   end
