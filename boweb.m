@@ -1,6 +1,6 @@
   clear
   clf
-  xPts = 301;                                                               % Number of x points. Odd
+  xPts = 101;                                                               % Number of x points. Odd
   L = 1.5;
   dx = L/xPts;
   dt   = 0.0001;                                                              % Time step.
@@ -23,9 +23,9 @@
   
   % Set force function.
   q    = zeros(xPts,1);                                                   % No force on most of it.
-  q(5) = 1000;
-  q(end-4) = 1000;
-  q(mid) = -2000;
+  q(5) = 10;
+  q(end-4) = 10;
+  q(mid) = -20;
 
   % Difference operator. 
   % Using second order coefficients for second derivative.
@@ -43,10 +43,10 @@
     dOne = dOne + ...
             d1Coeffs1(count + 5) * diag( ones( 1, xPts - abs(count) ), count);
   end
-%   dTwo(1,:) = 0;
-%   dTwo(1,1) = -1;
-%   dTwo(end,:) = 0;
-%   dTwo(end,end) = -1;
+  dTwo(1,:) = 0;
+  dTwo(1,1) = 0;
+  dTwo(end,:) = 0;
+  dTwo(end,end) = 0;
   
   
   %Euler-Bernoulli operator
@@ -55,11 +55,10 @@
   %Make HUGE MATRIX. Presently a huge operator such that 
   %Tfwd U(x,t) = U(x,t+1)
   M1 =  -10*dt/m*EBOp;                                      % map v to v stepping backwards
-  M2 = -EBOp/(m*dx);                                                            % map w to v
+  M2 = -EBOp/(m);                                                            % map w to v
   M3 = eye(xPts);                                                          % map w to w
   M4 = zeros(xPts,xPts);                                                   % map v to w
   
-  cVec(xPts+1:end) = M2^(-1)*(q/10);
   
   Tfwd = [M1 M2;...
           M3 M4];
