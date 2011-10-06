@@ -10,15 +10,15 @@
   Fx = [];
   Fy = [];
   
-  E = 1E9;
-  a = 1E-2*[1*ones(1,xPts/5) 3*ones(1,xPts/5) 1*ones(1,xPts/5) 3*ones(1,xPts/5) 1*ones(1,xPts/5)];                                                   %width
+  E = 1E10;
+  a = 1E-2*[1*ones(1,xPts/5) 3*ones(1,xPts/5) 5*ones(1,xPts/5) 3*ones(1,xPts/5) 1*ones(1,xPts/5)];                                                   %width
   b = 1E-2*[1*ones(1,xPts/5) 0.4*ones(1,xPts/5) 2*ones(1,xPts/5) 0.4*ones(1,xPts/5) 1*ones(1,xPts/5)];                                                   %width;                                                  %thickness
   I = (1/12)*a.*b.^3;                                                       %moment of area
   EI = diag(E.*I);
   
   arr = [-1:2/(xPts-1):1];
   deflection = zeros(xPts,1);
-   deflection = -0.15*arr.^8';         %dw/dx
+   deflection = 0*arr.^8';         %dw/dx
 %   deflection(1:mid-floor(xPts/5)-1) = deflection(mid-floor(xPts/5)) - ...
 %       diff(deflection(mid-floor(xPts/5)-1:mid-floor(xPts/5)))*arr(1:mid-floor(xPts/5)-1);         %dw/dx
 %   deflection(mid+floor(xPts/5)+1:end) = deflection(mid+floor(xPts/5)) - ...
@@ -79,7 +79,7 @@ Y = cphi;
   fin = 10000;
   fap = 1;
 
-  while Y(5) <= 0.5
+  while Y(5) <= 0.2
      
 coord_transform
     
@@ -126,7 +126,8 @@ coord_transform
 %CALCULATION LOOP----------------------------------------------------------
 count = 1;
 hold off;
-
+Fdx = [];
+Fdy = [];
 woot = 0.001;
 sl = X(end - 4);
 sy00 = Y(5);
@@ -134,22 +135,29 @@ sy0 = Y(5);
 sy = sy0;
 go = 0;
     Fapplied = 0;
-  while sy <= 0.7
-     
+    sv = 0 
+    SS = [sv sy];
+  while (go <=20000)
+    
 coord_transform
 
     
-    if sy >= Y(5)*1.01 && go <= 1000
+    if (sy >= Y(5)*1.01 && go <= 1000)
     sy = sy-1*dt*sy0;
     sy0 = sy;
-    go = go+1;
-    else 
-    sy = sy+0.2*dt*sy00;
-
+    elseif (go > 1000 & go < 10000 & sy < 0.7)
+    sy = sy+0.5*dt*sy00;
     Fx = [Fx sy-sy0];
     Fy = [Fy -Fapplied];
-    
+    elseif (go > 10000 & sy>sy0)
+        go
+%        pause(0.1)
+        sy = sy + sv*dt;
+        sv = sv + Fapplied/0.1*dt;
+        Fdx = [Fdx sy-sy0];
+        Fdy = [Fdy -Fapplied];
     end
+    go = go+1;
     sdx = X(end-4);
     sdy = sy - Y(5);
     sdl = sqrt(sdx^2+sdy^2)-sl;
@@ -188,3 +196,5 @@ coord_transform
 
   figure(3)
   plot(Fx, Fy)
+  figure(69)
+  plot(Fdx, Fdy)
