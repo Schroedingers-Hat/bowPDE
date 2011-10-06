@@ -3,22 +3,27 @@
   xPts = 305;                                                               % Number of x points. Odd
   L = 2;
   dx = L/xPts;
-  dt   = 0.001;                                                              % Time step.
-  m    = 1/xPts;                                                             % Mass density.
+  dt   = 0.0005;                                                              % Time step.
+  rho    = 0.67;                                                             % Mass density.
   mid = (xPts+1)/2;
-  k = 1E7;                                                                  %springyness of string
+  k = 5E6;                                                                  %springyness of string
   Fx = [];
   Fy = [];
+  m_arrow = 0.1;
   
-  E = 1E10;
-  a = 1E-2*[1*ones(1,xPts/5) 3*ones(1,xPts/5) 5*ones(1,xPts/5) 3*ones(1,xPts/5) 1*ones(1,xPts/5)];                                                   %width
-  b = 1E-2*[1*ones(1,xPts/5) 0.4*ones(1,xPts/5) 2*ones(1,xPts/5) 0.4*ones(1,xPts/5) 1*ones(1,xPts/5)];                                                   %width;                                                  %thickness
+  E = 1.5E10;
+  a = 1E-2*[2*ones(1,xPts/5) 2.5*ones(1,xPts/5) 3.2*ones(1,xPts/5) 2.5*ones(1,xPts/5) 2*ones(1,xPts/5)];                                                   %width
+  b = 1E-2*[2.6*ones(1,xPts/5) 3.3*ones(1,xPts/5) 4*ones(1,xPts/5) 3.3*ones(1,xPts/5) 2.6*ones(1,xPts/5)];                                                   %width;                                                  %thickness
+
+  md = diag(a.*b.*rho.*dx);
+  lmd = [md^-1 zeros(xPts);zeros(xPts) zeros(xPts)];
+  
   I = (1/12)*a.*b.^3;                                                       %moment of area
   EI = diag(E.*I);
   
   arr = [-1:2/(xPts-1):1];
   deflection = zeros(xPts,1);
-   deflection = 0*arr.^8';         %dw/dx
+   deflection = -0.0*arr.^8';         %dw/dx
 %   deflection(1:mid-floor(xPts/5)-1) = deflection(mid-floor(xPts/5)) - ...
 %       diff(deflection(mid-floor(xPts/5)-1:mid-floor(xPts/5)))*arr(1:mid-floor(xPts/5)-1);         %dw/dx
 %   deflection(mid+floor(xPts/5)+1:end) = deflection(mid+floor(xPts/5)) - ...
@@ -61,8 +66,8 @@
   
   %Make HUGE MATRIX. Presently a huge operator such that 
   %Tfwd U(x,t) = U(x,t+1)
-  M1 = -100*dt/m*EBOp;                                                % map v to v stepping backwards
-  M2 = -EBOp/(m);                                                          % map w to v
+  M1 = -100*dt*md^(-1)*EBOp;                                                % map v to v stepping backwards
+  M2 = -md^(-1)*EBOp;                                                          % map w to v
   M3 = eye(xPts);                                                          % map w to w
   M4 = zeros(xPts,xPts);                                                   % map v to w
   
@@ -75,11 +80,12 @@ cphi = zeros(xPts,1);
 X = cphi;
 Y = cphi;
 
+
 %STRINGING LOOP------------------------------------------------------------
   fin = 10000;
   fap = 1;
 
-  while Y(5) <= 0.2
+  while Y(5) <= 0.3
      
 coord_transform
     
@@ -99,7 +105,7 @@ coord_transform
     q = q+0.1*q0;
     F = [q;zeros(xPts,1)];
    
-    cVec = Tcrank * (cVec + F);                                             %CRANK
+    cVec = Tcrank * (cVec + lmd*F);                                             %CRANK
 
 
         if mod(fap, 10) == 0
@@ -107,7 +113,7 @@ coord_transform
         clc
         pc = count*100/fin
         force_on_arm = F(5)
-        applied_force = -q(mid)/m*dt
+        applied_force = -q(mid)*dt
         hold off;
         figure(1)
         plot(Y,X)
@@ -129,7 +135,7 @@ hold off;
 Fdx = [];
 Fdy = [];
 woot = 0.001;
-sl = X(end - 4);
+sl = X(end - 4)*0.95;
 sy00 = Y(5);
 sy0 = Y(5);
 sy = sy0;
@@ -137,37 +143,37 @@ go = 0;
     Fapplied = 0;
     sv = 0 
     SS = [sv sy];
-  while (go <=20000)
+  while (go <=12/dt)
     
 coord_transform
 
     
-    if (sy >= Y(5)*1.01 && go <= 1000)
+    if (sy >= Y(5)*1.01 && go <= 1/dt)
     sy = sy-1*dt*sy0;
     sy0 = sy;
-    elseif (go > 1000 & go < 10000 & sy < 0.7)
+    elseif (go > 1000 & go < 10/dt & sy < 0.7)
     sy = sy+0.5*dt*sy00;
     Fx = [Fx sy-sy0];
     Fy = [Fy -Fapplied];
-    elseif (go > 10000 & sy>sy0)
+    elseif (go > 10/dt & sy>sy0)
         go
 %        pause(0.1)
         sy = sy + sv*dt;
-        sv = sv + Fapplied/0.1*dt;
+        sv = sv + Fapplied/m_arrow*dt;
         Fdx = [Fdx sy-sy0];
         Fdy = [Fdy -Fapplied];
     end
     go = go+1;
     sdx = X(end-4);
     sdy = sy - Y(5);
-    sdl = sqrt(sdx^2+sdy^2)-sl;
+    sdl = max([sqrt(sdx^2+sdy^2)-sl 0]);
     sa = atan((sy-Y(5))/sdx);
     
     F = [max([k*sdl*sin(sa-cphi(5))*dt; woot]).*q0 ;zeros(xPts,1)];
 %    F(mid) = -2*F(5);
     F(mid) = -2*k*sdl*max([sin(sa-cphi(5)) 0])*dt;
     Fapplied = -2*k*sdl*max([sin(sa) 0])*dt;
-    cVec = Tcrank * (cVec + F);                                             %CRANK
+    cVec = Tcrank * (cVec + lmd*F);                                             %CRANK
 
     
     if mod(count, fin/100) == 0
