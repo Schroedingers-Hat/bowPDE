@@ -6,19 +6,19 @@
   dt   = 0.001;                                                              % Time step.
   m    = 1/xPts;                                                             % Mass density.
   mid = (xPts+1)/2;
-  k = 1E9;                                                                  %springyness of string
+  k = 1E6;                                                                  %springyness of string
   Fx = [];
   Fy = [];
   
-  E = 1E10;
+  E = 1E9;
   a = 1E-2*[1*ones(1,xPts/5) 3*ones(1,xPts/5) 1*ones(1,xPts/5) 3*ones(1,xPts/5) 1*ones(1,xPts/5)];                                                   %width
-  b = 1E-2*[.5*ones(1,xPts/5) 0.4*ones(1,xPts/5) 3*ones(1,xPts/5) 0.4*ones(1,xPts/5) .5*ones(1,xPts/5)];                                                   %width;                                                  %thickness
+  b = 1E-2*[1*ones(1,xPts/5) 0.4*ones(1,xPts/5) 2*ones(1,xPts/5) 0.4*ones(1,xPts/5) 1*ones(1,xPts/5)];                                                   %width;                                                  %thickness
   I = (1/12)*a.*b.^3;                                                       %moment of area
   EI = diag(E.*I);
   
   arr = [-1:2/(xPts-1):1];
   deflection = zeros(xPts,1);
-   deflection = -0.4*arr.^4';         %dw/dx
+   deflection = -0*arr.^4';         %dw/dx
 %   deflection(1:mid-floor(xPts/5)-1) = deflection(mid-floor(xPts/5)) - ...
 %       diff(deflection(mid-floor(xPts/5)-1:mid-floor(xPts/5)))*arr(1:mid-floor(xPts/5)-1);         %dw/dx
 %   deflection(mid+floor(xPts/5)+1:end) = deflection(mid+floor(xPts/5)) - ...
@@ -124,28 +124,26 @@ coord_transform
         axis equal
         axis([-0.2 0.5 -1 1])
 %CALCULATION LOOP----------------------------------------------------------
-  
-go = 0;
+count = 1;
 hold off;
+
+woot = 0.001;
+sl = X(end - 4);
+sy0 = Y(5);
+sy = sy0;
+go = 0;
+
   while sy <= 0.7
      
 coord_transform
     
-    if count == 1
-          woot = 0.001;
-          sl = X(end - 4);
-          sy0 = Y(5);
-          sy = sy0;
+    
+    if sy >= Y(5)*1.0 && go <= 1000
+    sy = sy-0.01*dt*sy0;
+    go = go+1;
     end
     
-    
-    if sy >= Y(5) && go == 0;
-    sy = sy-0.2*dt*sy0;
-    count = count-1;
-    go = 1;
-    end
-    
-    if sy <= 0.7 && count >= fin/3
+    if sy <= 0.7 && go >= 100
     sy = sy+0.2*dt*sy0;  
     Fx = [Fx sy-sy0];
     Fy = [Fy -F(mid)];
@@ -156,7 +154,7 @@ coord_transform
     sdl = sqrt(sdx^2+sdy^2)-sl;
     sa = atan((sy-Y(5))/sdx);
     
-    F = [max([k*sdl*sin(sa-cphi(5))*dt; 0]).*q0 ;zeros(xPts,1)];
+    F = [max([k*sdl*sin(sa-cphi(5))*dt; woot]).*q0 ;zeros(xPts,1)];
 %    F(mid) = -2*F(5);
     F(mid) = -2*k*sdl*max([sin(sa) 0])*dt;
     
@@ -169,14 +167,22 @@ coord_transform
         pc = count*100/fin
         force_on_arm = F(5)
         applied_force = -F(mid)
-        sdl
+        stretch = sdl/sl
+        sl
         hold off;
 
         figure(1)
-        plot([sy; Y(5); Y; Y(end-4); sy],[0; X(5); X; X(end-4); 0]')
+        plot([Y(5) sy Y(end-4)],[X(5) 0 X(end-4)])
+        hold on
+        plot(Y(1:end/5),X(1:end/5),'k')
+        plot(Y(end/5:2*end/5),X(1*end/5:2*end/5),'r')
+        plot(Y(2*end/5:3*end/5),X(2*end/5:3*end/5),'k')
+        plot(Y(3*end/5:4*end/5),X(3*end/5:4*end/5),'r')
+        plot(Y(4*end/5:end),X(4*end/5:end),'k')
         axis equal
         axis([-0.2 1 -1 1])
     end
+    count = count+1;
   end
 
   figure(3)
