@@ -3,31 +3,28 @@
   xPts = 305;                                                               % Number of x points. Odd
   L = 2;
   dx = L/xPts;
-  dt   = 0.0005;                                                              % Time step.
-  rho    = 0.67;                                                             % Mass density.
+  dt   = 0.001;                                                              % Time step.
+  rho    = 670;                                                             % Mass density.
   mid = (xPts+1)/2;
   k = 5E6;                                                                  %springyness of string
   Fx = [];
   Fy = [];
-  m_arrow = 0.1;
+  m_arrow = 0.3;
   
   E = 1.5E10;
   a = 1E-2*[2*ones(1,xPts/5) 2.5*ones(1,xPts/5) 3.2*ones(1,xPts/5) 2.5*ones(1,xPts/5) 2*ones(1,xPts/5)];                                                   %width
-  b = 1E-2*[2.6*ones(1,xPts/5) 3.3*ones(1,xPts/5) 4*ones(1,xPts/5) 3.3*ones(1,xPts/5) 2.6*ones(1,xPts/5)];                                                   %width;                                                  %thickness
+  b = 1E-2*[2*ones(1,xPts/5) 3.4*ones(1,xPts/5) 4*ones(1,xPts/5) 3.4*ones(1,xPts/5) 2*ones(1,xPts/5)];                                                   %width;                                                  %thickness
 
   md = diag(a.*b.*rho.*dx);
   lmd = [md^-1 zeros(xPts);zeros(xPts) zeros(xPts)];
   
-  I = (1/12)*a.*b.^3;                                                       %moment of area
+  I = (1/3)*a.*b.^3;                                                       %moment of area
   EI = diag(E.*I);
   
   arr = [-1:2/(xPts-1):1];
   deflection = zeros(xPts,1);
-   deflection = -0.0*arr.^8';         %dw/dx
-%   deflection(1:mid-floor(xPts/5)-1) = deflection(mid-floor(xPts/5)) - ...
-%       diff(deflection(mid-floor(xPts/5)-1:mid-floor(xPts/5)))*arr(1:mid-floor(xPts/5)-1);         %dw/dx
-%   deflection(mid+floor(xPts/5)+1:end) = deflection(mid+floor(xPts/5)) - ...
-%       diff(deflection(mid+floor(xPts/5):mid+floor(xPts/5)+1))*arr(mid+floor(xPts/5)+1:end);         %dw/dx
+   deflection = 0.*sinc(arr*3)';         %dw/dx
+
   %initial conditions
   cVec = zeros(2*xPts,1);
   
@@ -66,7 +63,7 @@
   
   %Make HUGE MATRIX. Presently a huge operator such that 
   %Tfwd U(x,t) = U(x,t+1)
-  M1 = -100*dt*md^(-1)*EBOp;                                                % map v to v stepping backwards
+  M1 = -1*dt*md^(-1)*EBOp;                                                % map v to v stepping backwards
   M2 = -md^(-1)*EBOp;                                                          % map w to v
   M3 = eye(xPts);                                                          % map w to w
   M4 = zeros(xPts,xPts);                                                   % map v to w
@@ -85,7 +82,7 @@ Y = cphi;
   fin = 10000;
   fap = 1;
 
-  while Y(5) <= 0.3
+  while Y(5) <= 0.15
      
 coord_transform
     
@@ -119,7 +116,7 @@ coord_transform
         plot(Y,X)
         hold on
         axis equal
-        axis([-0.5 1 -1 1])
+        axis([-0.5 1 -1.2 1.2])
         end
     fap = fap+1;
   end
@@ -128,7 +125,7 @@ coord_transform
         plot(Y,X)
         hold on
         axis equal
-        axis([-0.2 0.5 -1 1])
+        axis([-0.2 0.5 -1.2 1.2])
 %CALCULATION LOOP----------------------------------------------------------
 count = 1;
 hold off;
@@ -141,7 +138,7 @@ sy0 = Y(5);
 sy = sy0;
 go = 0;
     Fapplied = 0;
-    sv = 0 
+    sv = [0] 
     SS = [sv sy];
   while (go <=12/dt)
     
@@ -157,9 +154,8 @@ coord_transform
     Fy = [Fy -Fapplied];
     elseif (go > 10/dt & sy>sy0)
         go
-%        pause(0.1)
-        sy = sy + sv*dt;
-        sv = sv + Fapplied/m_arrow*dt;
+        sy = sy + sv(end)*dt;
+        sv = [sv sv(end)+Fapplied/m_arrow*dt];
         Fdx = [Fdx sy-sy0];
         Fdy = [Fdy -Fapplied];
     end
@@ -195,12 +191,14 @@ coord_transform
         plot(Y(3*end/5:4*end/5),X(3*end/5:4*end/5),'r')
         plot(Y(4*end/5:end),X(4*end/5:end),'k')
         axis equal
-        axis([-0.2 1 -1 1])
+        axis([-0.2 1 -1.2 1.2])
     end
     count = count+1;
   end
 
   figure(3)
   plot(Fx, Fy)
+hold on
+plot([Fx(1),Fx(end)], [Fy(1),Fy(end)],'r')
   figure(69)
   plot(Fdx, Fdy)
