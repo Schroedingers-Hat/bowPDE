@@ -1,36 +1,36 @@
   clear
   clf
-  xPts = 405;                                                               % Number of x points. Odd
+  xPts = 305;                                                               % Number of x points. Odd
   L = 2;
   dx = L/xPts;
   dt   = 0.001;                                                              % Time step.
   m    = 1/xPts;                                                             % Mass density.
   mid = (xPts+1)/2;
-  k = 1E6;                                                                  %springyness of string
+  k = 1E9;                                                                  %springyness of string
   Fx = [];
   Fy = [];
   
-  E = 1E9;
-  a = 1E-2*[0.5*ones(1,xPts/5) 1*ones(1,xPts/5) 2*ones(1,xPts/5) 1*ones(1,xPts/5) 0.5*ones(1,xPts/5)];                                                   %width
-  b = 1E-2*[0.5*ones(1,xPts/5) 0.5*ones(1,xPts/5) 1.5*ones(1,xPts/5) 0.5*ones(1,xPts/5) 0.5*ones(1,xPts/5)];                                                   %width;                                                  %thickness
+  E = 1E10;
+  a = 1E-2*[1*ones(1,xPts/5) 3*ones(1,xPts/5) 1*ones(1,xPts/5) 3*ones(1,xPts/5) 1*ones(1,xPts/5)];                                                   %width
+  b = 1E-2*[.5*ones(1,xPts/5) 0.4*ones(1,xPts/5) 3*ones(1,xPts/5) 0.4*ones(1,xPts/5) .5*ones(1,xPts/5)];                                                   %width;                                                  %thickness
   I = (1/12)*a.*b.^3;                                                       %moment of area
   EI = diag(E.*I);
   
   arr = [-1:2/(xPts-1):1];
   deflection = zeros(xPts,1);
-  deflection(mid-floor(xPts/5):mid+floor(xPts/5)) = -0.2*arr(mid-floor(xPts/5):mid+floor(xPts/5)).^2';         %dw/dx
-  deflection(1:mid-floor(xPts/5)-1) = deflection(mid-floor(xPts/5)) - ...
-      diff(deflection(mid-floor(xPts/5)-1:mid-floor(xPts/5)))*arr(1:mid-floor(xPts/5)-1);         %dw/dx
-  deflection(mid+floor(xPts/5)+1:end) = deflection(mid+floor(xPts/5)) - ...
-      diff(deflection(mid+floor(xPts/5):mid+floor(xPts/5)+1))*arr(mid+floor(xPts/5)+1:end);         %dw/dx
+   deflection = -0.4*arr.^4';         %dw/dx
+%   deflection(1:mid-floor(xPts/5)-1) = deflection(mid-floor(xPts/5)) - ...
+%       diff(deflection(mid-floor(xPts/5)-1:mid-floor(xPts/5)))*arr(1:mid-floor(xPts/5)-1);         %dw/dx
+%   deflection(mid+floor(xPts/5)+1:end) = deflection(mid+floor(xPts/5)) - ...
+%       diff(deflection(mid+floor(xPts/5):mid+floor(xPts/5)+1))*arr(mid+floor(xPts/5)+1:end);         %dw/dx
   %initial conditions
   cVec = zeros(2*xPts,1);
   
   % Set force function.
   q    = zeros(xPts,1); % No force on most of it.
   fk = 1;
-  q(3) = 1*fk;%*dx^4;
-  q(end-3) = 1*fk;%*dx^4;
+  q(5) = 1*fk;%*dx^4;
+  q(end-4) = 1*fk;%*dx^4;
   q(mid) = -2*fk;%*dx^4;
   q0 = q;
 
@@ -51,9 +51,9 @@
   dOne(1,1:3) = [-1 1 0]/dx;
   dOne(end,end-2:end) = [0 -1 1]/dx;
   dTwo(1,:) = 0;
-  dTwo(1,1:3) = [1 -2 1];
+  dTwo(1,1) = -1;
   dTwo(end,:) = 0;
-  dTwo(end,end-2:end) = [1 -2 1];
+  dTwo(end,end) = -1;
   
   
   %Euler-Bernoulli operator
@@ -61,7 +61,7 @@
   
   %Make HUGE MATRIX. Presently a huge operator such that 
   %Tfwd U(x,t) = U(x,t+1)
-  M1 = -1000*dt/m*EBOp;                                                % map v to v stepping backwards
+  M1 = -100*dt/m*EBOp;                                                % map v to v stepping backwards
   M2 = -EBOp/(m);                                                          % map w to v
   M3 = eye(xPts);                                                          % map w to w
   M4 = zeros(xPts,xPts);                                                   % map v to w
@@ -90,9 +90,6 @@ coord_transform
           sy = sy0;
     end
     
-    if sy <= 1.4
-    sy = sy+0.002*sy0;   
-    end
     
     sdx = X(end-4);
     sdy = sy - Y(5);
@@ -104,18 +101,16 @@ coord_transform
    
     cVec = Tcrank * (cVec + F);                                             %CRANK
 
-    
+
         if mod(fap, 10) == 0
         pause(0.01)
         clc
         pc = count*100/fin
         force_on_arm = F(5)
         applied_force = -q(mid)/m*dt
-        sdx = sdx
-        sa = sa
         hold off;
         figure(1)
-        plot([Y(5)+sdy; Y(5); Y; Y(end-4); Y(5)+sdy],[0; X(5); X; X(end-4); 0]')
+        plot(Y,X)
         hold on
         axis equal
         axis([-0.5 1 -1 1])
@@ -123,14 +118,16 @@ coord_transform
     fap = fap+1;
   end
   cVec(1:xPts) = 0;
-        figure(376)
-        plot([Y(5); Y(5); Y; Y(end-4); Y(5)],[0; X(5); X; X(end-4); 0]')
+        figure(2)
+        plot(Y,X)
         hold on
         axis equal
-        axis([-0.2 2 -1 1])
+        axis([-0.2 0.5 -1 1])
 %CALCULATION LOOP----------------------------------------------------------
-  hold off;
-  for count = 1:fin;
+  
+go = 0;
+hold off;
+  while sy <= 0.7
      
 coord_transform
     
@@ -141,8 +138,17 @@ coord_transform
           sy = sy0;
     end
     
-    if sy <= 1.4 && count >= fin/10
-    sy = sy+dt*sy0;   
+    
+    if sy >= Y(5) && go == 0;
+    sy = sy-0.2*dt*sy0;
+    count = count-1;
+    go = 1;
+    end
+    
+    if sy <= 0.7 && count >= fin/3
+    sy = sy+0.2*dt*sy0;  
+    Fx = [Fx sy-sy0];
+    Fy = [Fy -F(mid)];
     end
     
     sdx = X(end-4);
@@ -150,14 +156,12 @@ coord_transform
     sdl = sqrt(sdx^2+sdy^2)-sl;
     sa = atan((sy-Y(5))/sdx);
     
-    F = [max([k*sdl*sin(sa-cphi(5))*dt; 0]).*q ;zeros(xPts,1)];
-    F(mid) = -2*k*sdl*sin(sa)*dt;
+    F = [max([k*sdl*sin(sa-cphi(5))*dt; 0]).*q0 ;zeros(xPts,1)];
+%    F(mid) = -2*F(5);
+    F(mid) = -2*k*sdl*max([sin(sa) 0])*dt;
     
     cVec = Tcrank * (cVec + F);                                             %CRANK
 
-    
-    Fx(count) = sy;
-    Fy(count) = -F(mid);
     
     if mod(count, fin/100) == 0
         pause(0.01)
@@ -171,9 +175,9 @@ coord_transform
         figure(1)
         plot([sy; Y(5); Y; Y(end-4); sy],[0; X(5); X; X(end-4); 0]')
         axis equal
-        axis([-0.5 2 -1 1])
+        axis([-0.2 1 -1 1])
     end
   end
 
-  figure
+  figure(3)
   plot(Fx, Fy)
